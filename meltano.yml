@@ -1,0 +1,80 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: 9c3df990-af1a-45b7-8397-decf2fc36289
+plugins:
+  extractors:
+  - name: tap-gitlab
+    variant: meltano
+    pip_url: git+https://gitlab.com/meltano/tap-gitlab.git
+    config:
+      projects: meltano/meltano
+      start_date: '2020-05-12'
+  - name: tap-csv
+    variant: meltano
+    pip_url: git+https://gitlab.com/meltano/tap-csv.git
+    config:
+      files:
+      - entity: titanic
+        file: titanic.csv
+        keys:
+        - survived
+        - sex
+        - age
+        - n_siblings_spouses
+        - parch
+        - fare
+        - class
+        - deck
+        - embark_town
+        - alone
+      - entity: abalone
+        file: abalone_train.csv
+        keys:
+        - Length
+        - Diameter
+        - Height
+        - Whole weight
+        - Shucked weight
+        - Viscera weight
+        - Shell weight
+        - Age
+  - name: tap-postgres
+    variant: transferwise
+    pip_url: pipelinewise-tap-postgres
+    config:
+      default_replication_method: FULL_TABLE
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+
+  - name: target-csv
+    variant: singer-io
+    pip_url: target-csv
+    
+  - name: target-postgres
+    variant: transferwise
+    config:
+      host: dumbo.db.elephantsql.com
+      user: lahbtuaa
+      dbname: lahbtuaa
+
+schedules:
+- name: gitlab-to-jsonl
+  extractor: tap-gitlab
+  loader: target-jsonl
+  transform: run
+  interval: '@daily'
+  start_date: 2020-05-01 00:00:00
+- name: postgres-to-postgres
+  extractor: tap-postgres
+  loader: target-postgres
+  transform: skip
+  interval: '@once'
+  start_date: 2021-01-10 16:33:58.623779
+- name: postgres-to-csv
+  extractor: tap-postgres
+  loader: target-csv
+  transform: skip
+  interval: '@once'
+  start_date: 2021-01-10 16:36:01.484587
